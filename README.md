@@ -89,6 +89,5 @@ After pushing the repository to GitHub:
 ## Reports
 
 - [Word report](output/docx/HW4_Vital_Visions_Report.docx)
-- [PDF report](output/pdf/HW4_Vital_Visions_Report.pdf)
 
 The smartphone heart rate estimate is an educational optical measurement and is not medical advice.
