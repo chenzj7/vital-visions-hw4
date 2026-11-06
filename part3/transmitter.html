@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>HW4 Alpha-BFSK Transmitter</title>
+  <style>
+    :root { color-scheme: dark; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
+    * { box-sizing: border-box; }
+    body { margin: 0; min-height: 100vh; overflow: hidden; background: #08131c; color: #f5f7fa; }
+    #scene {
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(circle at 23% 26%, rgba(255,197,91,.95) 0 7%, transparent 8%),
+        radial-gradient(circle at 68% 37%, rgba(67,177,211,.8) 0 12%, transparent 13%),
+        linear-gradient(130deg, #123b52 0 36%, #246f71 36% 60%, #d8854f 60% 100%);
+    }
+    #scene::after {
+      content: "VITAL VISIONS"; position: absolute; right: 5vw; bottom: 5vh;
+      font-weight: 900; letter-spacing: .13em; font-size: clamp(34px, 8vw, 120px);
+      color: rgba(255,255,255,.62); text-shadow: 0 8px 30px rgba(0,0,0,.25);
+    }
+    #alphaOverlay { position: absolute; inset: 0; background: white; opacity: .5; pointer-events: none; }
+    .panel {
+      position: relative; z-index: 2; width: min(520px, calc(100vw - 32px)); margin: 24px;
+      padding: 20px; border-radius: 18px; background: rgba(4,12,18,.84);
+      border: 1px solid rgba(255,255,255,.18); box-shadow: 0 16px 48px rgba(0,0,0,.35);
+      backdrop-filter: blur(12px);
+    }
+    h1 { margin: 0 0 6px; font-size: 23px; }
+    p { color: #bfcbd5; line-height: 1.45; margin: 5px 0 16px; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    label { display: grid; gap: 6px; font-size: 12px; color: #cbd5dd; }
+    label:first-child { grid-column: 1 / -1; }
+    input, select, button { font: inherit; border-radius: 9px; border: 1px solid #3a4b59; padding: 10px 11px; }
+    input, select { color: white; background: #0d202d; }
+    button { grid-column: 1 / -1; cursor: pointer; color: #07131c; font-weight: 800; background: #7ee0ba; border: none; }
+    button:disabled { opacity: .55; cursor: wait; }
+    #status { margin-top: 14px; font-variant-numeric: tabular-nums; color: #e8f1f5; }
+    .note { font-size: 12px; color: #91a3af; margin-bottom: 0; }
+  </style>
+</head>
+<body>
+  <div id="scene"></div>
+  <div id="alphaOverlay"></div>
+  <main class="panel">
+    <h1>Alpha-channel BFSK transmitter</h1>
+    <p>Bit 0 uses one alpha cycle per symbol; bit 1 uses two. The frame contains a 16-bit alternating preamble, 16-bit byte length, UTF-8 payload, and CRC-16.</p>
+    <div class="grid">
+      <label>Message<input id="message" value="VITAL"></label>
+      <label>Delta alpha
+        <select id="delta"><option value="0.1">0.1</option><option value="0.5">0.5</option></select>
+      </label>
+      <label>Raw bit rate
+        <select id="rate"><option>1</option><option>2</option><option selected>4</option><option>6</option><option>8</option><option>10</option></select>
+      </label>
+      <button id="send">Send frame</button>
+    </div>
+    <div id="status">Idle - start the receiver recording first.</div>
+    <p class="note">For a measured BER, use the same message for every distance/alpha trial and pass it to receiver.py with --expected-message.</p>
+  </main>
+  <script>
+    const overlay = document.querySelector('#alphaOverlay');
+    const sendButton = document.querySelector('#send');
+    const status = document.querySelector('#status');
+    const preamble = Array.from({length: 16}, (_, i) => i % 2 === 0 ? 1 : 0);
+
+    function bytesToBits(bytes) {
+      const bits = [];
+      for (const byte of bytes) for (let shift = 7; shift >= 0; shift--) bits.push((byte >> shift) & 1);
+      return bits;
+    }
+    function crc16(bytes) {
+      let crc = 0xffff;
+      for (const byte of bytes) {
+        crc ^= byte << 8;
+        for (let i = 0; i < 8; i++) crc = (crc & 0x8000) ? ((crc << 1) ^ 0x1021) & 0xffff : (crc << 1) & 0xffff;
+      }
+      return crc;
+    }
+    function encodeFrame(message) {
+      const payload = new TextEncoder().encode(message);
+      if (payload.length > 65535) throw new Error('Message exceeds the 16-bit length field.');
+      const length = new Uint8Array([payload.length >> 8, payload.length & 255]);
+      const crc = crc16(payload);
+      return [...preamble, ...bytesToBits(length), ...bytesToBits(payload), ...bytesToBits(new Uint8Array([crc >> 8, crc & 255]))];
+    }
+    function transmit(bits, rawRate, deltaAlpha) {
+      return new Promise(resolve => {
+        const symbolMs = 1000 / rawRate;
+        const start = performance.now();
+        const duration = bits.length * symbolMs;
+        function tick(now) {
+          const elapsed = now - start;
+          if (elapsed >= duration) { overlay.style.opacity = '0.5'; resolve(); return; }
+          const index = Math.floor(elapsed / symbolMs);
+          const localSeconds = (elapsed - index * symbolMs) / 1000;
+          const frequency = bits[index] ? 2 * rawRate : rawRate;
+          const alpha = 0.5 + 0.5 * deltaAlpha * Math.sin(2 * Math.PI * frequency * localSeconds);
+          overlay.style.opacity = String(Math.max(0, Math.min(1, alpha)));
+          status.textContent = `Sending bit ${index + 1}/${bits.length} | value ${bits[index]} | alpha ${alpha.toFixed(3)}`;
+          requestAnimationFrame(tick);
+        }
+        requestAnimationFrame(tick);
+      });
+    }
+    sendButton.addEventListener('click', async () => {
+      const message = document.querySelector('#message').value;
+      const delta = Number(document.querySelector('#delta').value);
+      const rate = Number(document.querySelector('#rate').value);
+      const bits = encodeFrame(message);
+      sendButton.disabled = true;
+      status.textContent = `Starting ${bits.length}-bit frame...`;
+      await transmit(bits, rate, delta);
+      status.textContent = `Done: ${bits.length} bits in ${(bits.length / rate).toFixed(2)} s. Keep this page and settings for repeat trials.`;
+      sendButton.disabled = false;
+    });
+  </script>
+</body>
+</html>

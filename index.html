@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="HW4 Vital Visions: smartphone heart rate, medical image fine tuning, and screen-to-camera communication experiments.">
+  <title>HW4 Vital Visions</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-row">
+      <a class="site-name" href="#top">HW4 Vital Visions</a>
+      <nav aria-label="Primary navigation">
+        <a href="#part1">Part 1</a>
+        <a href="#part2">Part 2</a>
+        <a href="#part3">Part 3</a>
+        <a href="#files">Files</a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="top">
+    <section class="container introduction">
+      <p class="label">Assignment 4</p>
+      <h1>Vital Visions</h1>
+      <p class="lead">Three experiments use a phone camera, a medical image model, and a screen-camera link to measure biological and communication signals.</p>
+      <div class="links">
+        <a class="button" href="output/pdf/HW4_Vital_Visions_Report.pdf">Read the PDF report</a>
+        <a href="output/docx/HW4_Vital_Visions_Report.docx">Download the Word report</a>
+      </div>
+    </section>
+
+    <section class="container section" aria-labelledby="summary-heading">
+      <h2 id="summary-heading">Results Summary</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Experiment</th><th>Result</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Phone heart rate</td><td>75.15 bpm by FFT and 75.00 bpm by peak intervals</td></tr>
+            <tr><td>PneumoniaMNIST</td><td>79.17% test accuracy and 0.865 ROC AUC</td></tr>
+            <tr><td>Alpha-BFSK</td><td>48 recordings at 20, 40, 80, and 120 cm</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="part1" class="container section">
+      <div class="section-heading">
+        <p class="label">Part 1</p>
+        <h2>Smartphone Heart Rate Monitoring</h2>
+      </div>
+      <p>Mean grayscale intensity was extracted from each camera frame. A 0.5 Hz high-pass filter removed slow drift. Heart rate was estimated from the FFT peak and the intervals between detected peaks.</p>
+      <div class="figure-grid">
+        <figure>
+          <img src="part1/results/part1_fft.png" alt="FFT amplitude spectrum with a heart-rate peak near 1.252 Hz">
+          <figcaption>FFT estimate: 75.15 bpm.</figcaption>
+        </figure>
+        <figure>
+          <img src="part1/results/part1_peaks.png" alt="Filtered phone camera signal with selected heartbeat peaks">
+          <figcaption>Peak interval estimate: 75.00 bpm.</figcaption>
+        </figure>
+      </div>
+      <p class="source-link"><a href="part1/heart_rate.py">View the Part 1 analysis script</a></p>
+    </section>
+
+    <section id="part2" class="container section">
+      <div class="section-heading">
+        <p class="label">Part 2</p>
+        <h2>Medical Image Fine Tuning</h2>
+      </div>
+      <p>An ImageNet-pretrained ResNet-18 was trained on PneumoniaMNIST. The backbone was frozen and the final classifier was trained for five epochs.</p>
+      <div class="table-wrap compact">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Value</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Best validation accuracy</td><td>88.55%</td></tr>
+            <tr><td>Test accuracy</td><td>79.17%</td></tr>
+            <tr><td>Sensitivity</td><td>92.31%</td></tr>
+            <tr><td>Specificity</td><td>57.26%</td></tr>
+            <tr><td>ROC AUC</td><td>0.865</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="figure-grid">
+        <figure>
+          <img src="part2/results/part2_training_history.png" alt="Training and validation loss and accuracy across five epochs">
+          <figcaption>Training history.</figcaption>
+        </figure>
+        <figure>
+          <img src="part2/results/part2_test_evaluation.png" alt="Test confusion matrix and ROC curve">
+          <figcaption>Held-out test evaluation.</figcaption>
+        </figure>
+      </div>
+      <p class="source-link"><a href="part2/Part2_Medical_Finetuning.ipynb">Open the notebook</a> or <a href="part2/finetune_medmnist.py">view the training script</a>.</p>
+    </section>
+
+    <section id="part3" class="container section">
+      <div class="section-heading">
+        <p class="label">Part 3</p>
+        <h2>Alpha-Channel Screen Camera BFSK</h2>
+      </div>
+      <p>A browser transmitter encoded the message <code>VITAL</code> by changing screen opacity. The receiver measured grayscale intensity and decoded an 88-bit frame with CRC-16. The experiment tested two alpha differences, six raw bit rates, and four distances.</p>
+      <figure class="wide-figure">
+        <img src="part3/results_measured/part3_ber_measured.png" alt="Measured bit error rate by bit rate, distance, and alpha difference">
+        <figcaption>Measured BER from one recording for each of 48 conditions.</figcaption>
+      </figure>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Distance</th><th>Delta alpha</th><th>Maximum rate at BER at or below 1%</th><th>CRC passes</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>20 cm</td><td>0.1</td><td>6 bit/s</td><td>1/6</td></tr>
+            <tr><td>20 cm</td><td>0.5</td><td>10 bit/s</td><td>4/6</td></tr>
+            <tr><td>40 cm</td><td>0.1</td><td>4 bit/s</td><td>2/6</td></tr>
+            <tr><td>40 cm</td><td>0.5</td><td>2 bit/s</td><td>2/6</td></tr>
+            <tr><td>80 cm</td><td>0.1</td><td>6 bit/s</td><td>3/6</td></tr>
+            <tr><td>80 cm</td><td>0.5</td><td>2 bit/s</td><td>2/6</td></tr>
+            <tr><td>120 cm</td><td>0.1</td><td>6 bit/s</td><td>2/6</td></tr>
+            <tr><td>120 cm</td><td>0.5</td><td>6 bit/s</td><td>2/6</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="source-link"><a href="part3/transmitter.html">Open the transmitter</a> or <a href="part3/receiver.py">view the receiver script</a>.</p>
+    </section>
+
+    <section id="files" class="container section files">
+      <h2>Project Files</h2>
+      <ul>
+        <li><a href="output/pdf/HW4_Vital_Visions_Report.pdf">Final PDF report</a></li>
+        <li><a href="output/docx/HW4_Vital_Visions_Report.docx">Editable Word report</a></li>
+        <li><a href="part3/results_measured/part3_measured_results.csv">Complete Part 3 results CSV</a></li>
+        <li><a href="part3/results_measured/part3_measured_summary.csv">Part 3 summary CSV</a></li>
+        <li><a href="README.md">Setup and reproduction instructions</a></li>
+      </ul>
+    </section>
+  </main>
+
+  <footer>
+    <div class="container">
+      <p>HW4 Vital Visions. The phone heart rate result is an educational optical estimate, not medical advice.</p>
+    </div>
+  </footer>
+</body>
+</html>

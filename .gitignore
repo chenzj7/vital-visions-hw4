@@ -1,0 +1,21 @@
+.DS_Store
+~$*.docx
+__pycache__/
+*.pyc
+.venv/
+
+# Raw recordings are intentionally excluded from Git.
+dataset/*.MOV
+
+# Keep website figures and metrics, but exclude model weights and alternate outputs.
+part1/results/*
+!part1/results/*.png
+!part1/results/*.json
+part1/results_real/
+part2/results/*
+!part2/results/*.png
+!part2/results/*.json
+part3/results/
+
+# Local QA files are not part of the website.
+tmp/

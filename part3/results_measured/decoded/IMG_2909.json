@@ -1,0 +1,20 @@
+{
+  "sequence_index": 35,
+  "video": "IMG_2909.MOV",
+  "distance_cm": 80,
+  "delta_alpha": 0.5,
+  "requested_bit_rate_bps": 8.0,
+  "measured_fps": 30.0,
+  "duration_seconds": 12.766666666666667,
+  "frame_bits": 88,
+  "bit_errors": 22,
+  "missing_bits": 0,
+  "ber": 0.25,
+  "correct_bit_rate_bps": 6.0,
+  "crc_ok": false,
+  "decoded_message": "",
+  "frame_start_seconds": 0.9,
+  "mean_symbol_confidence": 0.3434346367335662,
+  "roi_xywh": "100,200,250,350",
+  "result_type": "hardware_measurement"
+}

@@ -1,0 +1,13 @@
+{
+  "source": "dataset/part1.MOV",
+  "fps": 30.001376209917886,
+  "duration_seconds": 34.331758409785934,
+  "frames_analyzed": 1030,
+  "fft_peak_hz": 1.2524846378897758,
+  "fft_heart_rate_bpm": 75.14907827338655,
+  "peak_interval_heart_rate_bpm": 75.00344052479471,
+  "selected_peak_count": 42,
+  "min_peak_distance_samples": 18,
+  "samples_per_beat_from_fft": 23.953488372093023,
+  "note": "Camera measurement; not medical advice"
+}
